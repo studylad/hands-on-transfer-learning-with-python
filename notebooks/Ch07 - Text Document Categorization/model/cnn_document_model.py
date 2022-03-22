@@ -75,14 +75,14 @@ class DocumentModel:
                         learn_sent_conv=True):
         
         
-        self.vocab_size = vocab_size 
+        self.vocab_size = vocab_size
         self.word_index = word_index
         self.embedding_dim = embedding_dim
-        self.embedding_weights = embedding_weights 
+        self.embedding_weights = embedding_weights
         self.train_embedding = train_embedding
         self.embedding_regularizer_l2 = embedding_regularizer_l2
         self.sentence_len = sentence_len
-        self.num_sentences = num_sentences                   
+        self.num_sentences = num_sentences
         self.word_kernel_size =  word_kernel_size
         self.word_filters = word_filters
         self.sent_kernel_size = sent_kernel_size
@@ -97,14 +97,17 @@ class DocumentModel:
         self.hidden_dropout = hidden_dropout
         self.num_hidden_layers = num_hidden_layers
         self.hidden_gaussian_noise_sd = hidden_gaussian_noise_sd
-        self.final_layer_kernel_regularizer = final_layer_kernel_regularizer  
-        self.hidden_layer_kernel_regularizer = hidden_layer_kernel_regularizer                  
+        self.final_layer_kernel_regularizer = final_layer_kernel_regularizer
+        self.hidden_layer_kernel_regularizer = hidden_layer_kernel_regularizer
         self.learn_word_conv = learn_word_conv
         self.learn_sent_conv = learn_sent_conv
         self.num_units_final_layer=num_units_final_layer
         if vocab_size != len(word_index):
-            print("Vocab Size = {}  and the index of vocabulary words passed has {} words".format(vocab_size,len(word_index)))
-            
+            print(
+                f"Vocab Size = {vocab_size}  and the index of vocabulary words passed has {len(word_index)} words"
+            )
+
+
         self._build_model()
         self.weights_file = None
         
@@ -117,7 +120,7 @@ class DocumentModel:
                                 trainable=self.train_embedding,
                                 embeddings_regularizer = regularizers.l2(self.embedding_regularizer_l2),
                                 name='imdb_embedding')
-        
+
         if self.embedding_weights is not None:
             embedding_layer = Embedding(self.vocab_size,
                                 self.embedding_dim,
@@ -126,13 +129,13 @@ class DocumentModel:
                                 trainable=self.train_embedding,
                                 embeddings_regularizer = regularizers.l2(self.embedding_regularizer_l2),
                                 name='imdb_embedding')
-        
+
         #input layer : sequence of word indices for each sentence
         sequence_input = Input(shape=(max_seq_length,), dtype='int32')
         z = embedding_layer(sequence_input)
         if self.input_dropout>0:
             z = Dropout(self.input_dropout)(z) 
-    
+
         conv_blocks = []
         i=0
         #same convolution filters to be used for all sentences.
@@ -143,7 +146,7 @@ class DocumentModel:
                                  trainable = self.learn_word_conv,
                                  name = "word_conv",
                                  strides=1)
-    
+
         for sent in range(self.num_sentences):
             #get once sentence from the input
             sentence =  Lambda(lambda x : x[:,sent*self.sentence_len: (sent+1)*self.sentence_len, :])(z) 
@@ -152,16 +155,16 @@ class DocumentModel:
             #transpose pooled values per sentence
             conv = Reshape([self.word_filters*self.sent_k_maxpool,1])(conv)
             conv_blocks.append(conv)
-        
+
         #append all sentence convolution feature maps and make sentence embeddings
         z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
-    
+
         #transform to (steps, input_dim)
         z = Permute([2,1], name='sentence_embeddings')(z)
-        
+
         if self.sent_dropout>0:
             z = Dropout(self.sent_dropout)(z) 
-    
+
         sent_conv = Conv1D(filters=self.sent_filters,
                               kernel_size=self.sent_kernel_size,
                               padding="valid",
@@ -169,28 +172,25 @@ class DocumentModel:
                               trainable = self.learn_sent_conv,
                               name = 'sentence_conv',
                               strides=1)(z)
-    
+
         z = KMaxPooling(k=self.doc_k_maxpool)(sent_conv)
         z = Flatten(name='document_embedding')(z)
-        
+
         if self.hidden_gaussian_noise_sd:
             z = GaussianNoise(self.hidden_gaussian_noise_sd)(z)
         elif self.hidden_dropout:
             z = Dropout(self.hidden_dropout)(z) 
-        
+
         for i in range(self.num_hidden_layers):
-            layer_name = 'hidden_{}'.format(i)
+            layer_name = f'hidden_{i}'
             z = Dense(self.hidden_dims, activation=self.hidden_activation, name=layer_name, 
                       kernel_regularizer=regularizers.l2(self.hidden_layer_kernel_regularizer))(z)
-        
-        output_activation = 'sigmoid'
-        if self.num_units_final_layer>1:
-            output_activation = 'softmax'
-            
+
+        output_activation = 'softmax' if self.num_units_final_layer>1 else 'sigmoid'
         model_output = Dense(self.num_units_final_layer, activation=output_activation,
                              kernel_regularizer=regularizers.l2(self.final_layer_kernel_regularizer),
                              name='final')(z)
-    
+
         self._model = Model(sequence_input, model_output)
 
     
@@ -206,11 +206,12 @@ class DocumentModel:
         return self._model
 
     def _save_model(self,file_name):
-        model_params = {}      
-        for key in self.__dict__.keys():
-            if key not in ['_model','embedding_weights']:
-                model_params[key] = self.__dict__[key]             
-        
+        model_params = {
+            key: self.__dict__[key]
+            for key in self.__dict__.keys()
+            if key not in ['_model', 'embedding_weights']
+        }
+
         with open(file_name, "w", encoding= "utf-8") as hp_file:
             json.dump(model_params, hp_file)
         

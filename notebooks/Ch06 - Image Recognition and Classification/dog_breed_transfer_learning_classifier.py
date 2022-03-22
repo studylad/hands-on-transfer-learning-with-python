@@ -221,7 +221,7 @@ model = Model(inputs=base_inception.input, outputs=predictions)
 # only if we want to freeze layers
 for layer in base_inception.layers:
     layer.trainable = False
-    
+
 # Compile 
 model.compile(Adam(lr=.0001), loss='categorical_crossentropy', metrics=['accuracy']) 
 
@@ -357,18 +357,14 @@ label_dict = dict(enumerate(labels_ohe_names.columns.values))
 model_input_shape = (1,)+model.get_input_shape_at(0)[1:]
 random_batch_indx = np.random.permutation(np.arange(0,len(dataset)))[:batch_size]
 
-img_idx = 0
-for i in range(0, grid_width):
-    for j in range(0, grid_height):
-        actual_label = np.array(y_test)[random_batch_indx[img_idx]]
-        prediction = model.predict(dataset[random_batch_indx[img_idx]].reshape(model_input_shape))[0]
-        label_idx = np.argmax(prediction)
-        predicted_label = label_dict.get(label_idx)
-        conf = round(prediction[label_idx], 2)
-        ax[i][j].axis('off')
-        ax[i][j].set_title('Actual: '+actual_label+'\nPred: '+predicted_label + '\nConf: ' +str(conf))
-        ax[i][j].imshow(dataset[random_batch_indx[img_idx]])
-        img_idx += 1
-
+for img_idx, (i, j) in enumerate(itertools.product(range(grid_width), range(grid_height))):
+    actual_label = np.array(y_test)[random_batch_indx[img_idx]]
+    prediction = model.predict(dataset[random_batch_indx[img_idx]].reshape(model_input_shape))[0]
+    label_idx = np.argmax(prediction)
+    predicted_label = label_dict.get(label_idx)
+    conf = round(prediction[label_idx], 2)
+    ax[i][j].axis('off')
+    ax[i][j].set_title('Actual: '+actual_label+'\nPred: '+predicted_label + '\nConf: ' +str(conf))
+    ax[i][j].imshow(dataset[random_batch_indx[img_idx]])
 plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0.5, hspace=0.55)    
 

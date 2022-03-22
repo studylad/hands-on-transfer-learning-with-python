@@ -17,7 +17,7 @@ class GloVe:
         self.embedding_matrix = None
         
     def _load(self):
-        print('Reading {} dim GloVe vectors'.format(self.EMBEDDING_DIM))
+        print(f'Reading {self.EMBEDDING_DIM} dim GloVe vectors')
         self.embeddings_index = {}
         with open(os.path.join(config.GLOVE_DIR, 'glove.6B.'+str(self.EMBEDDING_DIM)+'d.txt'),encoding="utf8") as fin:
             for line in fin:
@@ -29,13 +29,13 @@ class GloVe:
                 except:
                     print(line)
 
-        print('Found %s word vectors.' % len(self.embeddings_index))
+        print(f'Found {len(self.embeddings_index)} word vectors.')
         
     def _init_embedding_matrix(self, word_index_dict, oov_words_file='OOV-Words.txt'):
         self.embedding_matrix = np.zeros((len(word_index_dict)+2 , self.EMBEDDING_DIM)) # +1 for the 0 word index from paddings.
         not_found_words=0
         missing_word_index = []
-        
+
         with open(oov_words_file, 'w') as f: 
             for word, i in word_index_dict.items():
                 embedding_vector = self.embeddings_index.get(word)
@@ -44,14 +44,14 @@ class GloVe:
                     self.embedding_matrix[i] = embedding_vector
                 else:
                     not_found_words+=1
-                    f.write(word + ','+str(i)+'\n')
+                    f.write(f'{word},{str(i)}' + '\n')
                     missing_word_index.append(i)
 
             #oov by average vector:
             self.embedding_matrix[1] = np.mean(self.embedding_matrix, axis=0)
             for indx in missing_word_index:
                 self.embedding_matrix[indx] = np.random.rand(self.EMBEDDING_DIM)+ self.embedding_matrix[1]
-        print("words not found in embeddings: {}".format(not_found_words))
+        print(f"words not found in embeddings: {not_found_words}")
         
         
     def get_embedding(self, word_index_dict):
@@ -70,15 +70,15 @@ class GloVe:
                 self.embedding_matrix[this_vocab_word_indx] = embedding_vector                
                 #print("AFTER", self.embedding_matrix[this_vocab_word_indx])
                 num_updated+=1
-        
-        print('{} words are updated out of {}'.format(num_updated, len(word_index_dict)))
+
+        print(f'{num_updated} words are updated out of {len(word_index_dict)}')
 
 class Word2Vec(GloVe):
     def __init__(self, embd_dim=50):
         super().__init__(embd_dim=embd_dim)
         
     def _load(self):
-        print('Reading {} dim Gensim Word2Vec vectors'.format(self.EMBEDDING_DIM))
+        print(f'Reading {self.EMBEDDING_DIM} dim Gensim Word2Vec vectors')
         self.embeddings_index = {}
         with open(os.path.join(config.WORD2VEC_DIR, 'word2vec_'+str(self.EMBEDDING_DIM)+'_imdb.txt'),encoding="utf8") as fin:
             for line in fin:
@@ -90,7 +90,7 @@ class Word2Vec(GloVe):
                 except:
                     print(line)
 
-        print('Found %s word vectors.' % len(self.embeddings_index))
+        print(f'Found {len(self.embeddings_index)} word vectors.')
 #test
 #glove=Word2Vec(50)
 #initial_embeddings = glove.get_embedding({'good':2, 'movie':3})    

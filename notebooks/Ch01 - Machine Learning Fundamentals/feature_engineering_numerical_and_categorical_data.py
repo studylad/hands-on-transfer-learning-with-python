@@ -46,11 +46,7 @@ credit_df[['LIMIT_BAL','BILL_AMT1',
 
 # utility function
 def default_month_count(row):
-    count = 0 
-    for i in [0,2,3,4,5,6]:
-        if row['PAY_'+str(i)] > 0:
-            count +=1
-    return count
+    return sum(row[f'PAY_{str(i)}'] > 0 for i in [0,2,3,4,5,6])
 
 
 
@@ -154,7 +150,7 @@ from sklearn.preprocessing import LabelEncoder
 
 attacker_le = LabelEncoder()
 attacker_labels = attacker_le.fit_transform(battles_df.attacker_1)
-attacker_mappings = {index: label for index, label in enumerate(attacker_le.classes_)}
+attacker_mappings = dict(enumerate(attacker_le.classes_))
 attacker_mappings
 
 

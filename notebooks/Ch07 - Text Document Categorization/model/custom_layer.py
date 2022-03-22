@@ -25,10 +25,7 @@ class KMaxPooling(Layer):
         
         # swap last two dimensions since top_k will be applied along the last dimension
         shifted_input = tf.transpose(inputs, [0, 2, 1])
-        
-        # extract top_k, returns two tensors [values, indices]
-        top_k = tf.nn.top_k(shifted_input, k=self.k, sorted=True, name=None)[0]
-        
+
         # return flattened output
-        return top_k
+        return tf.nn.top_k(shifted_input, k=self.k, sorted=True, name=None)[0]
     

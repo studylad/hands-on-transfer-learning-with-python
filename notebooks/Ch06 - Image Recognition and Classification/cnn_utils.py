@@ -42,21 +42,35 @@ def plot_predictions(model,dataset,
     if model:
         f, ax = plt.subplots(grid_width, grid_height)
         f.set_size_inches(12, 12)
-        
+
         random_batch_indx = np.random.permutation(np.arange(0,len(dataset)))[:batch_size]
 
         img_idx = 0
-        for i in range(0, grid_width):
-            for j in range(0, grid_height):
+        for i in range(grid_width):
+            for j in range(grid_height):
                 actual_label = label_dict.get(dataset_labels[random_batch_indx[img_idx]].argmax())
                 preds,confs_ = make_prediction(model,
                                               img_vector=dataset[random_batch_indx[img_idx]],
                                               label_dict=label_dict,
                                               top_N=1)
                 ax[i][j].axis('off')
-                ax[i][j].set_title('Actual:'+actual_label[:10]+\
-                                    '\nPredicted:'+preds[0] + \
-                                    '(' +str(round(confs_[0],2)) + ')')
+                ax[i][j].set_title(
+                    (
+                        (
+                            (
+                                (
+                                    f'Actual:{actual_label[:10]}'
+                                    + '\nPredicted:'
+                                )
+                                + preds[0]
+                            )
+                            + '('
+                        )
+                        + str(round(confs_[0], 2))
+                        + ')'
+                    )
+                )
+
                 ax[i][j].imshow(dataset[random_batch_indx[img_idx]])
                 img_idx += 1
 
@@ -107,7 +121,7 @@ def display_activations(activation_maps):
     batch_size = activation_maps[0].shape[0]
     assert batch_size == 1, 'One image at a time to visualize.'
     for i, activation_map in enumerate(activation_maps):
-        print('Displaying activation map {}'.format(i))
+        print(f'Displaying activation map {i}')
         shape = activation_map.shape
         if len(shape) == 4:
             activations = np.hstack(np.transpose(activation_map[0], (2, 0, 1)))
@@ -118,7 +132,7 @@ def display_activations(activation_maps):
             # too hard to display it on the screen.
             if num_activations > 1024:  
                 square_param = int(np.floor(np.sqrt(num_activations)))
-                activations = activations[0: square_param * square_param]
+                activations = activations[:square_param**2]
                 activations = np.reshape(activations, (square_param, square_param))
             else:
                 activations = np.expand_dims(activations, axis=0)

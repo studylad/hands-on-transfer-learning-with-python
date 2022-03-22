@@ -13,8 +13,7 @@ import sys
 
 def strip_html_tags(text):
     soup = BeautifulSoup(text, "html.parser")
-    stripped_text = soup.get_text()
-    return stripped_text
+    return soup.get_text()
 
 
 
@@ -46,7 +45,7 @@ class Preprocess:
                 tokens = [token for token in tokens  if re.match('^[a-z]+$',token) is not None ]
                 for token in tokens:
                     word_index[token] = word_index.get(token, 0)+1
-                    
+
         filtered_word_index={}
         # i= 0 for empty, 1 for OOV
         i = 2
@@ -54,7 +53,7 @@ class Preprocess:
             if count >= Preprocess.MIN_WD_COUNT :
                 filtered_word_index[word] = i
                 i +=1
-        print('Found %s unique tokens.' % len(filtered_word_index))
+        print(f'Found {len(filtered_word_index)} unique tokens.')
         return filtered_word_index
     
     def _text2wordindex_seq(self, word_index, corpus):
@@ -63,17 +62,15 @@ class Preprocess:
         Also, padds short sentences with zeros and short documents with zero sentences.
         '''
         data = []
-        doc_count = 0 
-        for doc in corpus:
+        for doc_count, doc in enumerate(corpus, start=1):
             doc2wordseq = []
             sent_num =0
-            doc_count+=1
             if doc_count%1000 == 0 :
                 percent_processed = doc_count*100/len(corpus)
                 sys.stdout.write("\r%f%% documents processed." % percent_processed)
                 sys.stdout.flush()
             for sentence in sent_tokenize(doc):
-                
+
                 words = wordpunct_tokenize(sentence)
                 words = [token.lower().strip()  for token in words]
                 word_id_seq = [word_index[word] for word in words  if word_index.get(word) is not None]

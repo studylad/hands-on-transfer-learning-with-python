@@ -36,7 +36,7 @@ print(battles_df.head())
 
 
 # ## Explore raw properties
-print("Number of attributes available in the dataset = {}".format(battles_df.shape[1]))
+print(f"Number of attributes available in the dataset = {battles_df.shape[1]}")
 
 
 # View available columns and their data types
@@ -49,7 +49,7 @@ battles_df.describe()
 # ## Number of Battles Fought
 # This data is till **season 5** only
 
-print("Number of battles fought={}".format(battles_df.shape[0]))
+print(f"Number of battles fought={battles_df.shape[0]}")
 
 
 # ## Battle Distribution Across Years
@@ -138,7 +138,7 @@ attack_winners = battles_df[battles_df.\
                                 ['attacker_king'].\
                                 value_counts().\
                                 reset_index()
-                                
+
 attack_winners.rename(
         columns={'index':'king',
                  'attacker_king':'wins'},
@@ -207,12 +207,11 @@ battles_df['total_involved_count'] = battles_df.apply(lambda row: \
                                       row['attacker_house_count'] + \
                                       row['defender_house_count'],
                                                       axis=1)
-battles_df['bubble_text'] = battles_df.apply(lambda row: \
-          '{} had {} house(s) attacking {} house(s) '.\
-          format(row['name'],
-                 row['attacker_house_count'],
-                 row['defender_house_count']),
-                 axis=1)
+battles_df['bubble_text'] = battles_df.apply(
+    lambda row: f"{row['name']} had {row['attacker_house_count']} house(s) attacking {row['defender_house_count']} house(s) ",
+    axis=1,
+)
+
 
 
 # ## Unbalanced Battles

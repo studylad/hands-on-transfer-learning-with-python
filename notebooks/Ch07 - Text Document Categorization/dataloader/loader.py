@@ -19,11 +19,10 @@ class Loader:
     amzn_reviews_kaggle_regx = re.compile(r'__label__(?P<label>([1|2]))(\s+)(?P<summary>(.*)):(?P<review>(.*))')    
     
     def load_20newsgroup_data(categories = None, subset='all'):
-        data = fetch_20newsgroups(subset=subset,
+        return fetch_20newsgroups(subset=subset,
                               shuffle=True,
                               remove=('headers', 'footers', 'quotes'),
                              categories = categories)
-        return data
 
     
     def load_imdb_data(directory = 'train', datafile = None):
@@ -33,15 +32,15 @@ class Loader:
         '''    
         labels = {'pos': 1, 'neg': 0}
         df = pd.DataFrame()
-        
+
         for sentiment in ('pos', 'neg'):
-            path =r'{}/{}/{}'.format(config.IMDB_DATA, directory, sentiment)
+            path = f'{config.IMDB_DATA}/{directory}/{sentiment}'
             for review_file in os.listdir(path):
                 with open(os.path.join(path, review_file), 'r', encoding= 'utf-8') as input_file:
                     review = input_file.read()
                 df = df.append([[utils.strip_html_tags(review), labels[sentiment]]], 
                                              ignore_index=True)
-        
+
         df.columns = ['review', 'sentiment']
         indices = df.index.tolist()
         np.random.shuffle(indices)
@@ -53,13 +52,13 @@ class Loader:
     
     def load_imdb_unsup():
         df = pd.DataFrame()
-        
-        path =r'{}/{}/{}'.format(config.IMDB_DATA, 'train', 'unsup')
+
+        path = f'{config.IMDB_DATA}/train/unsup'
         for review_file in os.listdir(path):
             with open(os.path.join(path, review_file), 'r', encoding= 'utf-8') as input_file:
                 review = input_file.read()
                 df = df.append([[utils.strip_html_tags(review)]], ignore_index=True)
-        
+
         df.columns = ['review']
         indices = df.index.tolist()
         np.random.shuffle(indices)
@@ -76,14 +75,17 @@ class Loader:
         fastText_filename = os.path.join(config.AMAZON_TEST_DATA ,'test.ft.txt')
         if test_or_train is 'train':
             fastText_filename = os.path.join(config.AMAZON_TRAIN_DATA ,'train.ft.txt')
-           
+
         with open(fastText_filename, encoding="utf8") as fin:
             for line in fin:
                 m = Loader.amzn_reviews_kaggle_regx.search(line)
-                data.append({
-                    'review':'{} . {}'.format(m.group('summary'),m.group('review')),
-                    'sentiment': int(m.group('label'))-1 #convert 1,2 to 0, 1        
-                })
+                data.append(
+                    {
+                        'review': f"{m.group('summary')} . {m.group('review')}",
+                        'sentiment': int(m.group('label')) - 1,
+                    }
+                )
+
         return pd.DataFrame(data)
     
     def load_reuters(test_or_train='train'):
@@ -92,9 +94,9 @@ class Loader:
         categories = reuters.categories()
         encoder = LabelEncoder()
         encoder.fit(categories)
-        
-        print(str(len(categories)) + " categories")
-        
+
+        print(f'{len(categories)} categories')
+
         for category in categories:
             category_docs = reuters.fileids(category)
             for document_id in category_docs:   
@@ -104,7 +106,7 @@ class Loader:
                         'document':reuters.raw(document_id),
                         'label': encoder.transform([category])[0]
                     })
-        
+
         return pd.DataFrame(data)
     
     def load_processed_20newsgrp_data(test_or_train='train'):

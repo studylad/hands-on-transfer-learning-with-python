@@ -5,6 +5,7 @@ Created on Wed Apr 11 15:34:14 2018
 @author: tghosh
 """
 
+
 import config
 from dataloader.loader import Loader
 from preprocessing.utils import Preprocess, remove_empty_docs
@@ -97,9 +98,11 @@ amazon_review_model._save_model(train_params.model_hyper_parameters)
 
 learned_embeddings = amazon_review_model.get_classification_model().get_layer('imdb_embedding').get_weights()[0]
 
-embd_change = {}
-for word, i in preprocessor.word_index.items():    
-    embd_change[word] = np.linalg.norm(initial_embeddings[i]-learned_embeddings[i])
+embd_change = {
+    word: np.linalg.norm(initial_embeddings[i] - learned_embeddings[i])
+    for word, i in preprocessor.word_index.items()
+}
+
 embd_change = sorted(embd_change.items(), key=lambda x: x[1], reverse=True)
-embd_change[0:20]
+embd_change[:20]
 
